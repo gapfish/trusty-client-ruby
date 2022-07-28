@@ -1,15 +1,17 @@
 class Trustly::Data::JSONRPCResponse < Trustly::Data::Response
+  VERSION_ERROR = 'JSON RPC Version is not supported'
 
-  def initialize(http_response)
-    super(http_response)
-    version = self.get("version")
-    raise Trustly::Exception::JSONRPCVersionError, "JSON RPC Version is not supported" if version != '1.1'
+  def initialize(**options)
+    super
+    version = payload['version']
+    if version != '1.1'
+      raise Trustly::Exception::JSONRPCVersionError, VERSION_ERROR 
+    end
   end
 
-  def get_data(name=nil)
-    return self.response_result.try(:[],"data") if name.nil?
-    return Trustly::Exception::DataError, "Data not found or key is null" if self.response_result.try(:[],"data").nil? || name.nil?
-    return self.response_result["data"][name]
+  def data_at(name)
+    return if data.nil?
+    
+    data[name]
   end
-
 end

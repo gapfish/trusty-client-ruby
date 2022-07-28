@@ -18,6 +18,7 @@ Gem::Specification.new do |gem|
 
 
   gem.add_dependency('rake')
+  gem.add_dependency('faraday')
   gem.add_development_dependency('rspec', [">= 2.0.0"])
 
   # ensure the gem is built out of versioned files

@@ -1,33 +1,12 @@
 class Trustly::Data::Request < Trustly::Data
-
   attr_accessor :method
 
-  def initialize(method=nil,payload=nil)
+  def initialize(**options)
     super
-    self.payload = self.vacuum(payload) unless payload.nil?
-    unless method.nil?
-      self.method  = method
-    else
-      self.method  = self.payload.get('method')
+    if (new_payload = options[:payload])
+      vacuumed_payload = vacuum(new_payload)
+      self.payload = stringify_hash(vacuumed_payload)
     end
+    self.method = options[:method] || payload['method']
   end
-
-  def get_method
-    return self.method
-  end
-
-  def set_method(method)
-    self.method = method
-    return method
-  end
-
-  def get_uuid
-    return self.payload.get('uuid')
-  end
-
-  def set_uuid
-    self.set('uuid',uuid)
-    return uuid
-  end
-
 end

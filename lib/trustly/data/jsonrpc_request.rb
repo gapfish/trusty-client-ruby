@@ -1,92 +1,78 @@
 class Trustly::Data::JSONRPCRequest < Trustly::Data::Request
+  def initialize(**options)
+    super(**options.slice(:method, :payload))
 
-  def initialize(method=nil,data=nil,attributes=nil)
+    data = options[:data]
+    attributes = options[:attributes]
+    payload['params'] ||= {}
+    payload['version'] ||= '1.1'
 
-    if !data.nil? || !attributes.nil?
-      self.payload = {"params"=>{}}
-      unless data.nil?
-        if !data.is_a?(Hash) && !attributes.nil?
-          raise TypeError, "Data must be a Hash if attributes is provided"
-        else
-          self.payload["params"]["Data"] = data
-        end
-      else
-        self.payload["params"]["Data"] = {}
-      end
-
-      self.payload["params"]["Data"]["Attributes"] = attributes unless attributes.nil?
-    end
-
-    self.payload['method']  = method unless method.nil?
-    self.payload['params']  = {}     unless self.get('params')
-    self.payload['version'] = '1.1'
-
+    initialize_data_and_attributes(data, attributes)
   end
 
-
-  def get_param(name)
-    return self.payload['params'].try(:[],name)
+  def params(name)
+    payload['params']
   end
 
-  def get_data(name=nil)
-    data = self.get_param('Data')
-    return data if name.nil?
-    raise  KeyError, "Not found #{name} in data" if data.nil?
-    return data.dup if name.nil?
-    return data.try(:[],name)
+  def data
+    params['Data']
   end
 
-  def get_attribute(name)
-    data        = self.get_param('Data')
+  def data_at(name)
+    params.dig('Data', name)
+  end
+
+  def attribute_at(name)
+    params.dig('Data', 'Attributes', name)
+  end
+
+  def update_data_at(name, value)
+    params['Data'] ||= {}
+    params['Data'][name] = value
+  end
+
+  def update_attribute_at(name, value)
+    params['Data'] ||= {}
+    params['Data']['Attributes'] ||= {}
+    params['Data']['Attributes'][name] = value
+  end
+
+  def signature
+    params['Signature']
+  end
+
+  def signature=(value)
+    params['Signature'] = value
+  end
+
+  def method=(value)
+    super
+    payload['method'] = method
+  end
+
+  def uuid
+    params['UUID']
+  end
+
+  def uuid=(value)
+    params['UUID'] = value
+  end
+
+  private
+
+  def initialize_data_and_attributes(data, attributes)
+    return if data.nil? && attributes.nil?
+    
     if data.nil?
-      attributes  = nil
+      payload['params']['Data'] ||= {}
     else
-      attributes  = data.try(:[],'Attributes')
+      if !data.is_a?(Hash) && !attributes.nil?
+        raise TypeError, 'Data must be a Hash if attributes are provided'
+      end
+      payload['params']['Data'] = vacuum(data)
     end
-    raise KeyError, "Not found 'Attributes' in data" if attributes.nil?
-    return attributes.dup if name.nil?
-    return attributes.try(:[],name)
+    return if attributes.nil?
+ 
+    payload['params']['Data']['Attributes'] ||= vacuum(attributes)
   end
-
-  def set_param(name,value)
-    self.payload['params'][name] = value
-  end
-
-  def set_data(name,value)
-    unless name.nil?
-      self.payload['params']['Data']       = {} if self.payload['params'].try(:[],'Data').nil?
-      self.payload['params']['Data'][name] = value
-    end
-    return value
-  end
-
-  def set_attributes(name,value)
-    unless name.nil?
-      self.payload['params']['Data']                     = {} if self.payload['params'].try(:[],'Data').nil?
-      self.payload['params']['Data']['Attributes']       = {} if self.payload['params']['Data'].try(:[],'Attributes').nil?
-      self.payload['params']['Data']['Attributes'][name] = value
-    end
-    return value
-  end
-
-  def set_uuid(uuid)
-    return self.set_param('UUID',uuid)
-  end
-
-  def get_uuid
-    return self.get_param('UUID')
-  rescue KeyError => e 
-    return nil
-  end 
-
-  def set_method(method)
-    return self.set('method',method)
-  end
-
-  def get_method()
-    return self.get('method')
-  rescue KeyError => e
-    return nil
-  end
-
 end

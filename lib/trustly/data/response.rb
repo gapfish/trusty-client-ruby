@@ -1,80 +1,72 @@
 class Trustly::Data::Response < Trustly::Data
-  attr_accessor :response_status, :response_reason, :response_body, :response_result
+  attr_accessor :response_status,
+    :response_reason,
+    :response_body,
+    :response_result
 
-  def initialize(http_response) #called from Net::HTTP.get_response("trustly.com","/api_path") -> returns Net::HTTPResponse 
-    super()
-    self.response_status = http_response.code
-    self.response_reason = http_response.class.name
-    self.response_body   = http_response.body
-    begin
-      self.payload       = JSON.parse(self.response_body)
-    rescue JSON::ParserError => e 
-      if self.response_status != 200
-        raise Trustly::Exception::ConnectionError, "#{self.response_status}: #{self.response_reason} [#{self.response_body}]"
-      else
-        raise Trustly::Exception::DataError, e.message
-      end
-    end
-
-    begin
-      self.response_result = self.get('result')
-    rescue IndexError::KeyError => e
-      self.response_result = nil
-    end
-
-    if self.response_result.nil?
-      begin
-        self.response_result = self.payload["error"]["error"]
-      rescue IndexError::KeyError => e
-      end
-    end
-    raise Trustly::Exception::DataError, "No result or error in response #{self.payload}" if self.response_result.nil?
+  #called from Net::HTTP.get_response("trustly.com","/api_path") -> returns Net::HTTPResponse
+  def initialize(**options)
+    super
+    http_response = options[:http_response]
+    process_http_response(http_response)
   end
 
   def error?
-    return !self.get('error').nil?
-  rescue IndexError::KeyError => e
-    return false
+    !payload['error'].nil?
   end
 
   def error_code
-    return nil unless self.error?
-    return self.response_result["data"].try(:[],'code')
+    return nil unless error?
+
+    response_result.dig('data', 'code')
   end
 
-  def error_msg
-    return nil unless self.error?
-    return self.response_result["data"].try(:[],'message')
+  def error_message
+    return nil unless error?
+
+    response_result.dig('data', 'message')
   end
 
   def success?
-    return !self.get('result').nil?
-  rescue IndexError::KeyError => e
-    return false
+    !payload['result'].nil?
   end
 
-  def get_uuid
-    return self.response_result.try(:[],'uuid')
+  def data
+    response_result['data']
   end
 
-  def get_method
-    return self.response_result.try(:[],'method')
+  def uuid
+    response_result['uuid']
   end
 
-  def get_signature
-    return self.response_result.try(:[],"signature")
+  def method
+    response_result['method']
   end
 
-  def get_result
-    unless name.nil?
-      if self.response_result.is_a?(Hash)
-        return self.response_result.try(:[],name)
-      else
-        raise StandardError::TypeError, "Result is not a Hash"
-      end
-    else
-      return self.response_result.dup
+  def signature
+    response_result['signature']
+  end
+
+  private
+
+  def process_http_response(http_response)
+    self.response_status = http_response.code
+    self.response_reason = http_response.class.name
+    init_response_result(http_response.body)
+  end
+
+  def init_response_result(body)
+    self.payload = JSON.parse(body)
+    self.response_result = payload['result'] || payload.dig('error', 'error')
+    return unless response_result.nil?
+
+    message = "No result or error in response #{payload}"
+    raise Trustly::Exception::DataError, message
+  rescue JSON::ParserError => e 
+    if response_status != 200
+      message = "#{response_status}: #{response_reason} [#{response_body}]"
+      raise Trustly::Exception::ConnectionError, message
     end
+    raise Trustly::Exception::DataError, e.message
   end
-
 end

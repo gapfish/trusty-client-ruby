@@ -1,63 +1,59 @@
 class Trustly::JSONRPCNotificationResponse < Trustly::Data
-  
-  def initialize(request,success=nil)
-    super()
-    uuid   = request.get_uuid()
-    method = request.get_method()
+  def initialize(**options)
+    super
+    request = options[:request]
+    success = options[:success]
 
-    self.set('version','1.1')
-    self.set_result('uuid',   uuid)       unless uuid.nil?
-    self.set_result('method', method)     unless method.nil?
-    self.set_data(  'status', (!success.nil? && !success ? 'FAILED' : 'OK' ))
+    self.version = '1.1'
+    self.uuid = request.uuid if request.uuid
+    self.method = request.method if request.method
+    self.update_data_at('status', success ? 'OK' : 'FAILED')
   end
 
-  def set_signature(signature)
-    self.set_result('signature',signature)
+  def signature=(value)
+    update_result_at('signature', value)
   end
 
-  def set_result(name,value)
-    return nil if name.nil? || value.nil?
-    self.payload["result"]                = {} if self.payload.try(:[],"result").nil?
-    self.payload["result"][name]          = value
+  def method=(value)
+    update_result_at('method', value)
   end
 
-  def set_data(name,value)
-    return nil if name.nil? || value.nil?
-    self.payload["result"]               = {} if self.payload.try(:[],"result").nil?
-    self.payload["result"]["data"]       = {} if self.payload["result"].try(:[],"data").nil?
-    self.payload["result"]["data"][name] = value
+  def uuid=(value)
+    update_result_at('uuid', value)
   end
 
-  def get_result(name)
-    raise KeyError,"#{name} is not present in result" if name.nil? || self.payload.try(:[],"result").nil? || self.payload["result"].try(:[],name).nil?
-    return self.payload["result"][name]
+  def version=(value)
+    payload['version'] = value
   end
 
-  def get_data(name=nil)
-    raise KeyError,"#{name} is not present in data" if name.nil? || self.payload.try(:[],"result").nil? || self.payload["result"].try(:[],"data").nil? || self.payload["result"]["data"].try(:[],name).nil?
-    return self.payload["result"]["data"][name]
+  def update_result_at(name, value)
+    payload['result'] ||= {}
+    payload['result'][name] = value
   end
 
-  def get_data(name=nil)
-    if name.nil?
-      raise KeyError,"Data not present" if self.payload.try(:[],"result").nil? || self.payload["result"].try(:[],"data").nil?
-      return self.payload["result"]["data"]
-    else
-      raise KeyError,"#{name} is not present in data" if name.nil? || self.payload.try(:[],"result").nil? || self.payload["result"].try(:[],"data").nil? || self.payload["result"]["data"].try(:[],name).nil?
-      return self.payload["result"]["data"][name]
-    end
+  def update_data_at(name, value)
+    payload['result'] ||= {}
+    payload['result']['data'] ||= {}
+    payload['result']['data'][name] = value
   end
 
-  def get_method
-    return self.get_result('method')
+  def data
+    payload.dig('result', 'data')
   end
 
-  def get_uuid
-    return self.get_result('uuid')
+  def result
+    payload['result']
   end
 
-  def get_signature
-    return self.get_result('signature')
+  def method
+    result['method']
   end
 
+  def uuid
+    result['uuid']
+  end
+
+  def signature
+    result['signature']
+  end
 end
