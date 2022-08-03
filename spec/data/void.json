@@ -1,0 +1,11 @@
+{
+  "version": "1.1",
+  "result": {
+      "signature": "ICPnfczGVjEc24+0DeRhZtQTLEXN2LWXiIQhlhsdB5A8hA4xfzcOOyDGtvcF\ntLT4Psckez1f0/dn+v9VNK2/qBcN0/pVdfIkKgUeM3TwMWJTJsG+z+p30Nwn\n8lsicvXZRsYi7xs1SxOiSe3L937HCQv41YP0bk6SfvnAi4xnJ9jwT+UCr+fj\nh7vcBqlrwsDMuYT1X5qRlnpYJoI9/PfMIhu15vQ3LsLF00s0yzU2cU58NSBQ\nuDP7NSU394Pev4xE6RGHOLvYxh7CXbXdP5rQKMk+xE48SdCUAiLVB1zXHN6r\nMZAXEFJN6deWuqzSjtqF+zVAmBM/2bW4VzYqSErP4Q==",
+      "method": "Void",
+      "data": {
+          "result": "1"
+      },
+      "uuid": "8bedfbd4-8181-38e1-f0be-f360171aefc6"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "version": "1.1",
+  "result": {
+      "signature": "b8PabwcB4ETNAx0hRQWLLamCiLMYKVFmQZ+jZ+f8mRZtJKy0PJ+M+Pmcaqjj\nkLXH6FjEtLIOebIH2lwc4qmnG9Kli7Z4TbkLkk80icI4RSFTyCJnFHE1ERSR\nZ+OAfomR+4dZ6gcgJiG08a7QjpV0kzAeLjCz/1iouCXOivg7r0TbqaxywrjY\n/nf/OROP6YGLie/zu0FjTv1pp/zO1pF1nLTd8S+/KjPP0t9YZM58Zu6yMBgm\ntMSF5jPSIP894+wMC0Bzy4Sg0HF2lrgDSTvCCaiscLl4mX3PaHvIXc5wyNW9\nrbqlXzFUtetSeWT41m0YSLvs79v9TYaU97rN0OFR/Q==",
+      "method": "Refund",
+      "data": {
+          "result": "1",
+          "orderid": "1187741486"
+      },
+      "uuid": "8bedfbd4-8181-38e1-f0be-f360171aefc6"
+  }
+}

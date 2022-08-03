@@ -6,24 +6,12 @@ class Trustly::Api
     :trustly_key
 
   def initialize(**config)
-    self.api_host = config.fetch(:host, nil)
-    self.api_port = config.fetch(:port, nil)
-    self.api_is_https = config.fetch(:is_https, nil)
+    self.api_host = config[:host]
+    self.api_port = config[:port]
+    self.api_is_https = config[:is_https]
 
-    self.load_trustly_key(config[:public_key])
+    self.load_trustly_key(config[:public_pem])
     validate!
-  end
-
-  def url_path(_request = nil)
-    raise NotImplementedError
-  end
-
-  def handle_response(_request, _http_call)
-    raise NotImplementedError
-  end
-
-  def insert_credentials(_request)
-    raise NotImplementedError
   end
 
   def verify_signed_response(response)
@@ -37,6 +25,18 @@ class Trustly::Api
   end
 
   private
+
+  def url_path(_request = nil)
+    raise NotImplementedError
+  end
+
+  def handle_response(_request, _http_call)
+    raise NotImplementedError
+  end
+
+  def insert_credentials(_request)
+    raise NotImplementedError
+  end
 
   def serialize(object)
     serialized = ""
@@ -59,7 +59,9 @@ class Trustly::Api
   end
 
   def load_trustly_key(pkey)
-    self.trustly_key = OpenSSL::PKey::RSA.new(pub_key) unless pkey.nil?
+    self.trustly_key = OpenSSL::PKey::RSA.new(pkey) unless pkey.nil?
+  rescue OpenSSL::PKey::RSAError
+    self.trustly_key = nil
   end
 
   def validate!
@@ -79,7 +81,7 @@ class Trustly::Api
   def base_url
     schema = api_is_https ? 'https' : 'http'
     add_port = (api_is_https && api_port != 443) || api_port != 80
-    port = add_port ? ":#{api_port}" : ''
+    port = add_port && !api_port.nil? ? ":#{api_port}" : ''
     "#{schema}://#{api_host}#{port}"
   end
 
@@ -96,6 +98,24 @@ class Trustly::Api
       request_uri.path, body, { 'Content-Type' => 'application/json' }
     )
     handle_response(request, response)
+  rescue Faraday::Error => e
+    handle_error(e, request, body)
+  end
+
+  def handle_error(error, request, body)
+    message = e.message
+    exception = case error
+                when Faraday::ParsingError, Trustly::ClientError
+                  Trustly::Exception::DataError
+                else
+                  Trustly::Exception::ConnectionError
+                end
+    unless (response = error.response).nil?
+      message = "
+        #{response.status}: #{response.body} - #{request.method}, #{body}
+      "
+    end
+    raise exception, message
   end
 
   def connection(request_uri)

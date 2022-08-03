@@ -1,0 +1,14 @@
+{
+  "result": {
+      "signature": "4uDNGT+/9dXjMtRBJ/dybFfl0qVFrvncL3WxKze7wbvBzByAg4B63Ar3pRFn\nff18ewAXZOOK+GOOeUZMdv/lXMKtGbXwS+iapbYm/qjKJW8NCFLfqrHjooH3\nES/8XUvrZ8wNyjTZx6nKt4ZWO0SgP+2htUI/2K2GCuB/FLZJ2qICdiJh7ZPv\nPIbocsdbvifKUyrIB3Lgrmdl5OoW5RmfXFCQ4CuHNWlpeioTZ2D6BlL/cPK2\nGso/b+WPT9w5ADw77ucqDvhBFOQrQFuINAaP7AXSvcJRpTRwcTMEf0JsBlex\nldn2JWNsruxzWbU+DBY+0ijz0CKCar7/5tMWgueqNQ==",
+      "uuid": "258a2184-2842-b485-25ca-293525152425",
+      "method": "RegisterAccount",
+      "data": {
+          "accountid": "7653385737",
+          "clearinghouse": "SWEDEN",
+          "bank": "Handelsbanken",
+          "descriptor": "**706212"
+      }
+  },
+  "version": "1.1"
+}

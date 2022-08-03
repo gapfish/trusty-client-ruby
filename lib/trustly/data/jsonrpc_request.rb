@@ -5,17 +5,21 @@ class Trustly::Data::JSONRPCRequest < Trustly::Data::Request
     data = options[:data]
     attributes = options[:attributes]
     payload['params'] ||= {}
-    payload['version'] ||= '1.1'
+    payload['version'] ||= 1.1
 
     initialize_data_and_attributes(data, attributes)
   end
 
-  def params(name)
+  def params
     payload['params']
   end
 
   def data
     params['Data']
+  end
+
+  def attributes
+    params.dig('Data', 'Attributes')
   end
 
   def data_at(name)

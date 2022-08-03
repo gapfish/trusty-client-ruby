@@ -1,6 +1,11 @@
 module Trustly
 end
 
+require 'base64'
+require 'openssl'
+require 'faraday'
+require 'faraday_middleware'
+
 require 'trustly/exception'
 require 'trustly/exception/authentification_error'
 require 'trustly/exception/connection_error'

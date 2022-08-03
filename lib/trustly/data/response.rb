@@ -50,23 +50,16 @@ class Trustly::Data::Response < Trustly::Data
   private
 
   def process_http_response(http_response)
-    self.response_status = http_response.code
-    self.response_reason = http_response.class.name
+    self.response_status = http_response.status
+    self.response_reason = http_response.reason_phrase
     init_response_result(http_response.body)
   end
 
   def init_response_result(body)
-    self.payload = JSON.parse(body)
+    self.payload = body
     self.response_result = payload['result'] || payload.dig('error', 'error')
     return unless response_result.nil?
 
     message = "No result or error in response #{payload}"
     raise Trustly::Exception::DataError, message
-  rescue JSON::ParserError => e 
-    if response_status != 200
-      message = "#{response_status}: #{response_reason} [#{response_body}]"
-      raise Trustly::Exception::ConnectionError, message
-    end
-    raise Trustly::Exception::DataError, e.message
-  end
 end

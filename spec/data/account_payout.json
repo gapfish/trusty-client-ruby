@@ -1,0 +1,12 @@
+{
+  "result": {
+      "signature": "JNtiLW1S+9SE2KgU/3xFiRS5sIieGAcGuoaPx4fUFTGuHe/MQpw9/1pyF4An\nVwawCM0zeqVcZGyyXq/FBBxt7f1adbVuGBw7QQsfRn6qiKR8abXo8a8VBjG8\n8tN4k4hHkcib90Xuq0ecfT45svje+OtsPRo70lzZzAycJnE0Dz8/gZC8Wy5V\n1lEAAJLXE87C6yCPBvAWroX98Rh4+7e4n8Us7yuAUi6VYQ8YOwTXmHSzI2dH\n0KwF9io30NkbwBtjc9PeoS6M7Ave1ri/yaDAM5DlbbcCLMjZUxledAPI+B4u\nizhiWXCUJcnXsSaQu/AMs7QmwQdutle92T5q6o1aSw==",
+      "uuid": "258a2184-2842-b485-25ca-293525152425",
+      "method": "AccountPayout",
+      "data": {
+          "orderid": "7653345737",
+          "result": "1"
+      }
+  },
+  "version":"1.1"
+}
