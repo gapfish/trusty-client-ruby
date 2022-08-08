@@ -12,8 +12,8 @@ RSpec.describe Trustly::Data::JSONRPCResponse do
           'signature' => 'signature',
           'method' => 'Test',
           'data' => {
-              'result' => '1',
-              'orderid' => '1187741486'
+            'result' => '1',
+            'orderid' => '1187741486'
           },
           'uuid' => '8bedfbd4-8181-38e1-f0be-f360171aefc6'
         }

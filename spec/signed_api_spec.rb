@@ -7,8 +7,8 @@ RSpec.describe Trustly::Api::Signed do
     {
       username: 'User',
       password: 'Password',
-      private_pem: ENV['MERCHANT_PRIVATE_KEY'],
-      public_pem: ENV['TRUSTLY_PUBLIC_KEY'],
+      private_pem: ENV.fetch('MERCHANT_PRIVATE_KEY', nil),
+      public_pem: ENV.fetch('TRUSTLY_PUBLIC_KEY', nil),
       host: 'test.trustly.com'
     }
   end
@@ -21,7 +21,7 @@ RSpec.describe Trustly::Api::Signed do
           basic_params.except(:private_pem)
         end
         it 'uses default key' do
-          expect(subject.merchant_key.to_pem).to eq ENV['MERCHANT_PRIVATE_KEY']
+          expect(subject.merchant_key.to_pem).to eq ENV.fetch('MERCHANT_PRIVATE_KEY', nil)
         end
       end
 
@@ -30,7 +30,7 @@ RSpec.describe Trustly::Api::Signed do
           basic_params.except(:public_key)
         end
         it 'uses default key' do
-          expect(subject.trustly_key.to_pem).to eq ENV['TRUSTLY_PUBLIC_KEY']
+          expect(subject.trustly_key.to_pem).to eq ENV.fetch('TRUSTLY_PUBLIC_KEY', nil)
         end
       end
 
@@ -148,9 +148,9 @@ RSpec.describe Trustly::Api::Signed do
         context 'with valid data' do
           context 'with a successful response' do
             before do
-              expect(Trustly::Data::JSONRPCRequest).to receive(:new).
-                with(method: method, data: data, attributes: attriubtes).
-                and_return(double)
+              expect(Trustly::Data::JSONRPCRequest).to receive(:new)
+                .with(method: method, data: data, attributes: attriubtes)
+                .and_return(double)
             end
 
             it 'makes a JSON RPC request and verifies its response' do

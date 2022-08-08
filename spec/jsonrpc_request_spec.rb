@@ -14,22 +14,22 @@ RSpec.describe Trustly::Data::JSONRPCRequest do
     shared_examples_for 'successful initialization' do
       it 'has method' do
         expect(subject.payload).to include({
-          'method' => method
-        })
+                                             'method' => method
+                                           })
       end
       it 'has version' do
         expect(subject.payload).to include({
-          'version' => 1.1
-        })
+                                             'version' => 1.1
+                                           })
       end
       it 'initializes payload' do
         expect(subject.payload).to include({
-          'params' => a_hash_including({
-            'Data' => {
-              'Attributes' => attributes
-            }.merge(data)
-          })
-        })
+                                             'params' => a_hash_including({
+                                                                            'Data' => {
+                                                                              'Attributes' => attributes
+                                                                            }.merge(data)
+                                                                          })
+                                           })
       end
       it 'initializes attributes' do
         expect(subject.attributes).to eq({ 'B' => 2 })
@@ -49,7 +49,7 @@ RSpec.describe Trustly::Data::JSONRPCRequest do
       context 'with invalid data' do
         let(:params) do
           {
-            data: [1,2,3],
+            data: [1, 2, 3],
             attributes: { 'Data' => 'test' }
           }
         end
@@ -146,12 +146,12 @@ RSpec.describe Trustly::Data::JSONRPCRequest do
       let(:params) do
         {
           payload: {
-            'method': method,
-            'params': {
-              'UUID': uuid,
-              'Signature': signature,
-              'Data': {
-                'Attributes': attributes
+            'method' => method,
+            'params' => {
+              'UUID' => uuid,
+              'Signature' => signature,
+              'Data' => {
+                'Attributes' => attributes
               }.merge(data)
             }
           }
