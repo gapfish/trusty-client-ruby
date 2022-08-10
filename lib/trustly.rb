@@ -1,12 +1,15 @@
+# frozen_string_literal: true
+
 module Trustly
 end
 
 require 'base64'
 require 'openssl'
+require 'stringio'
 require 'faraday'
 require 'faraday_middleware'
 
-require 'trustly/exception'
+require 'trustly/exception/base'
 require 'trustly/exception/authentification_error'
 require 'trustly/exception/connection_error'
 require 'trustly/exception/data_error'

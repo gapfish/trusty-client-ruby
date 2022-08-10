@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Trustly
   module Data
     class Base
@@ -7,7 +9,7 @@ module Trustly
         self.payload = {}
       end
 
-      def to_json
+      def to_json(*_args)
         payload.to_json
       end
 
@@ -26,18 +28,20 @@ module Trustly
         ret = data.each_with_object([]) do |element, acc|
           processed_element = vacuum(element) unless element.nil?
           next if processed_element.nil?
+
           acc.push(processed_element)
         end
-        ret.length == 0 ? nil : ret
+        ret.length.zero? ? nil : ret
       end
 
       def vacuum_hash_data(data)
         ret = data.each_with_object({}) do |(key, element), acc|
           processed_element = vacuum(element) unless element.nil?
           next if processed_element.nil?
+
           acc[key] = processed_element
         end
-        ret.length == 0 ? nil : ret
+        ret.length.zero? ? nil : ret
       end
 
       def stringify_hash(hash)

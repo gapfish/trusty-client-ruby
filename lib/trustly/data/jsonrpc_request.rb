@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Trustly
   module Data
     class JSONRPCRequest < Request
@@ -68,17 +70,24 @@ module Trustly
 
       def initialize_data_and_attributes(data, attributes)
         return if data.nil? && attributes.nil?
-        
+
+        initialize_data(data, !attributes.nil?)
+        initialize_attributes(attributes)
+      end
+
+      def initialize_data(data, with_attributes)
         if data.nil?
           payload['params']['Data'] ||= {}
         else
-          if !data.is_a?(Hash) && !attributes.nil?
-            raise TypeError, 'Data must be a Hash if attributes are provided'
-          end
+          raise TypeError, 'Data must be a Hash if attributes are provided' if !data.is_a?(Hash) && with_attributes
+
           payload['params']['Data'] = vacuum(data)
         end
+      end
+
+      def initialize_attributes(attributes)
         return if attributes.nil?
-    
+
         payload['params']['Data']['Attributes'] ||= vacuum(attributes)
       end
     end

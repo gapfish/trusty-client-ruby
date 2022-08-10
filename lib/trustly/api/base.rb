@@ -1,18 +1,20 @@
+# frozen_string_literal: true
+
 module Trustly
   module Api
-    class Base
+    class Base # rubocop:disable Metrics/ClassLength
       attr_accessor :api_host,
-        :api_port,
-        :api_is_https,
-        :last_request,
-        :trustly_key
+                    :api_port,
+                    :api_is_https,
+                    :last_request,
+                    :trustly_key
 
       def initialize(**config)
         self.api_host = config[:host]
         self.api_port = config[:port]
         self.api_is_https = config[:is_https]
 
-        self.load_trustly_key(config[:public_pem])
+        load_trustly_key(config[:public_pem])
         validate!
       end
 
@@ -20,43 +22,49 @@ module Trustly
         method = response.method || ''
         uuid = response.uuid || ''
         raw_signature = Base64.decode64(response.signature || '')
-        serial_data = "#{method}#{uuid}#{self.serialize(response.data)}"
+        serial_data = "#{method}#{uuid}#{serialize(response.data)}"
         trustly_key.public_key.verify(
-          OpenSSL::Digest::SHA1.new, raw_signature, serial_data
+          OpenSSL::Digest.new('SHA1'), raw_signature, serial_data
         )
       end
 
       private
 
       def url_path(_request = nil)
+        # :nocov:
         raise NotImplementedError
+        # :nocov:
       end
 
       def handle_response(_request, _http_call)
+        # :nocov:
         raise NotImplementedError
+        # :nocov:
       end
 
       def insert_credentials(_request)
+        # :nocov:
         raise NotImplementedError
+        # :nocov:
       end
 
       def serialize(object)
-        serialized = ""
+        serialized = StringIO.new
         case object
         when Array then serialize_array(object, serialized)
         when Hash then serialize_hash(object, serialized)
-        else serialized.concat(object.to_s)
+        else serialized << object.to_s
         end
-        serialized
+        serialized.string
       end
 
       def serialize_array(object, serialized)
-        object.each { |value| serialized.concat(serialize(value)) }
+        object.each { |value| serialized << serialize(value) }
       end
 
       def serialize_hash(object, serialized)
         object.sort.each do |key, value|
-          serialized.concat(key.to_s).concat(serialize(value))
+          serialized << key.to_s << serialize(value)
         end
       end
 
@@ -88,7 +96,7 @@ module Trustly
       end
 
       def url(request)
-        return URI.parse("#{self.base_url}#{url_path(request)}")
+        URI.parse("#{base_url}#{url_path(request)}")
       end
 
       def call_rpc(request)
@@ -105,25 +113,33 @@ module Trustly
       end
 
       def handle_error(error, request, body)
-        message = e.message
-        exception = case error
-                    when Faraday::ParsingError, Trustly::ClientError
-                      Trustly::Exception::DataError
-                    else
-                      Trustly::Exception::ConnectionError
-                    end
-        unless (response = error.response).nil?
-          message = "
-            #{response.status}: #{response.body} - #{request.method}, #{body}
-          "
+        message = error.message
+        exception = exception_for_error(error)
+        unless error.response.nil?
+          status = error.response_status
+          error_body = error.response_body
+          message += <<-MSG.gsub(/\s+/, ' ').rstrip
+            -> #{status}: #{error_body} - #{request.method}, #{body}
+          MSG
         end
         raise exception, message
       end
 
+      def exception_for_error(error)
+        case error
+        when Faraday::ParsingError, Faraday::ClientError
+          Trustly::Exception::DataError
+        else
+          Trustly::Exception::ConnectionError
+        end
+      end
+
       def connection(request_uri)
         Faraday.new(request_uri.origin) do |conn|
+          # :nocov:
           conn.response :json
           conn.adapter :net_http
+          # :nocov:
         end
       end
     end

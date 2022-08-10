@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Trustly
   module Data
     class JSONRPCNotificationRequest < Request
@@ -37,9 +39,9 @@ module Trustly
 
       def notification_body(body)
         return stringify_hash(body) if body.is_a?(Hash)
-        
+
         JSON.parse(body)
-      rescue JSON::ParserError => e 
+      rescue JSON::ParserError => e
         raise Trustly::Exception::DataError, e.message
       end
     end

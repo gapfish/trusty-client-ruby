@@ -1,12 +1,14 @@
+# frozen_string_literal: true
+
 module Trustly
   module Data
     class Response < Base
       attr_accessor :response_status,
-        :response_reason,
-        :response_body,
-        :response_result
+                    :response_reason,
+                    :response_body,
+                    :response_result
 
-      #called from Net::HTTP.get_response("trustly.com","/api_path") -> returns Net::HTTPResponse
+      # called from Net::HTTP.get_response("trustly.com","/api_path") -> returns Net::HTTPResponse
       def initialize(**options)
         super
         http_response = options[:http_response]

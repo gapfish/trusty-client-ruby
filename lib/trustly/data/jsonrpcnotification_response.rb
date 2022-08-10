@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Trustly
   module Data
     class JSONRPCNotificationResponse < Base
@@ -9,7 +11,7 @@ module Trustly
         self.version = '1.1'
         self.uuid = request.uuid if request.uuid
         self.method = request.method if request.method
-        self.update_data_at('status', success ? 'OK' : 'FAILED')
+        update_data_at('status', success ? 'OK' : 'FAILED')
       end
 
       def signature=(value)
@@ -45,6 +47,10 @@ module Trustly
 
       def result
         payload['result']
+      end
+
+      def version
+        payload['version']
       end
 
       def method

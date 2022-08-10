@@ -1,20 +1,21 @@
+# frozen_string_literal: true
+
 module Trustly
   module Api
-    class Signed < Base
+    class Signed < Base # rubocop:disable Metrics/ClassLength
       DEFAULT_API_PATH = '/api/1'
       SIGNATURE_ERROR = 'Incoming message signature is not valid'
       UUID_MISMATCH = 'Incoming response is not related to the request. UUID mismatch.'
 
-      attr_accessor :url_path,
-        :api_username,
-        :api_password,
-        :merchant_key
+      attr_accessor :api_username,
+                    :api_password,
+                    :merchant_key
 
       def initialize(**config)
         full_config = default_config.merge(config)
         self.api_username = full_config.fetch(:username, nil)
         self.api_password = full_config.fetch(:password, nil)
-        self.load_merchant_key(full_config[:private_pem])
+        load_merchant_key(full_config[:private_pem])
 
         super(**full_config.slice(*%i[host port is_https public_pem]))
       end
@@ -25,7 +26,7 @@ module Trustly
         call_rpc_for_data('Void', options, data: data, required: required)
       end
 
-      def deposit(**options)
+      def deposit(**options) # rubocop:disable Metrics/MethodLength
         required = %w[
           Locale Country Currency SuccessURL FailURL NotificationURL Amount
           EndUserID MessageID Firstname Lastname ShopperStatement
@@ -57,7 +58,7 @@ module Trustly
         )
       end
 
-      def select_account(**options)
+      def select_account(**options) # rubocop:disable Metrics/MethodLength
         required = %w[
           Locale Country SuccessURL FailURL NotificationURL EndUserID MessageID
           Firstname Lastname
@@ -76,7 +77,7 @@ module Trustly
         )
       end
 
-      def account_payout(**options)
+      def account_payout(**options) # rubocop:disable Metrics/MethodLength
         required = %w[
           NotificationURL AccountID EndUserID MessageID Amount Currency
           ShopperStatement
@@ -94,7 +95,7 @@ module Trustly
         )
       end
 
-      def register_account(**options)
+      def register_account(**options) # rubocop:disable Metrics/MethodLength
         required = %w[
           EndUserID ClearingHouse BankNumber AccountNumber Firstname Lastname
         ]
@@ -120,8 +121,8 @@ module Trustly
         )
       end
 
-      def notification_response(request, success = true)
-        response = Trustly::JSONRPCNotificationResponse.new(
+      def notification_response(request, success: true)
+        response = Trustly::Data::JSONRPCNotificationResponse.new(
           request: request, success: success
         )
         response.signature = sign_merchant_request(response)
@@ -145,18 +146,14 @@ module Trustly
       end
 
       def handle_response(request, response)
-        rcp_response = Trustly::Data::JSONRPCResponse.new(response)
-        check_response(rcp_response, request)
+        rpc_response = Trustly::Data::JSONRPCResponse.new(http_response: response)
+        check_response(rpc_response, request)
         rpc_response
       end
 
       def check_response(response, request)
-        unless self.verify_signed_response(response)
-          raise Trustly::Exception::SignatureError, SIGNATURE_ERROR
-        end
-        if response.uuid != request.uuid
-          raise Trustly::Exception::DataError, UUID_MISMATCH
-        end
+        raise Trustly::Exception::DataError, UUID_MISMATCH if response.uuid != request.uuid
+        raise Trustly::Exception::SignatureError, SIGNATURE_ERROR unless verify_signed_response(response)
       end
 
       def insert_credentials!(request)
@@ -171,8 +168,8 @@ module Trustly
         data = request.data || {}
 
         serial_data = "#{method}#{uuid}#{serialize(data)}"
-        sha1hash = OpenSSL::Digest::SHA1.new
-        signature = self.merchant_key.sign(sha1hash, serial_data)
+        sha1hash = OpenSSL::Digest.new('SHA1')
+        signature = merchant_key.sign(sha1hash, serial_data)
         Base64.encode64(signature).chop
       end
 
@@ -185,15 +182,14 @@ module Trustly
         super(request)
       end
 
-      def call_rpc_for_data(method, options, data:, required:, attriubtes: [])
+      def call_rpc_for_data(method, options, data:, required:, attributes: [])
         missing_options = required.find_all { |req| options[req].nil? }
         unless missing_options.empty?
           msg = "Required data is missing: #{missing_options.join('; ')}"
           raise Trustly::Exception::DataError, msg
         end
         request = Trustly::Data::JSONRPCRequest.new(
-          method: method,
-          data: options.slice(*data),
+          method: method, data: options.slice(*data),
           attributes: attributes.empty? ? nil : options.slice(*attributes)
         )
         call_rpc(request)
@@ -204,8 +200,8 @@ module Trustly
           host: 'test.trustly.com',
           port: 443,
           is_https: true,
-          private_pem: ENV['MERCHANT_PRIVATE_KEY'],
-          public_pem: ENV['TRUSTLY_PUBLIC_KEY']
+          private_pem: ENV.fetch('MERCHANT_PRIVATE_KEY', nil),
+          public_pem: ENV.fetch('TRUSTLY_PUBLIC_KEY', nil)
         }
       end
     end

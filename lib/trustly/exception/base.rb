@@ -2,7 +2,7 @@
 
 module Trustly
   module Exception
-    class ConfigurationError < Base
+    class Base < StandardError
     end
   end
 end

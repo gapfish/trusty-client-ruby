@@ -7,7 +7,7 @@ RSpec.describe Trustly::Data::JSONRPCRequest do
     subject { described_class.new(**params) }
     let(:method) { 'Test' }
     let(:data) { { 'A' => 1 } }
-    let(:attributes) { { 'B' => 2 } }
+    let(:attributes) { { 'B' => 2, 'Array' => [1, 2, 3] } }
     let(:uuid) { SecureRandom.uuid }
     let(:signature) { 'signature' }
 
@@ -32,7 +32,7 @@ RSpec.describe Trustly::Data::JSONRPCRequest do
                                            })
       end
       it 'initializes attributes' do
-        expect(subject.attributes).to eq({ 'B' => 2 })
+        expect(subject.attributes).to eq({ 'B' => 2, 'Array' => [1, 2, 3] })
       end
       it 'initializes data' do
         expect(subject.data).to eq({ 'A' => 1, 'Attributes' => attributes })
@@ -227,6 +227,12 @@ RSpec.describe Trustly::Data::JSONRPCRequest do
       it 'updates signature' do
         subject.method = 'OtherTest'
         expect(subject.payload).to include('method' => 'OtherTest')
+      end
+    end
+
+    describe '#to_json' do
+      it 'transforms payload to json' do
+        expect(subject.to_json).to eq(payload.merge('version' => 1.1).to_json)
       end
     end
   end
