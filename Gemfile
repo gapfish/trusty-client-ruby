@@ -1,4 +1,4 @@
-source 'https://rubygems.org'
+# frozen_string_literal: true
 
-# Specify your gem's dependencies in trustly-client-ruby.gemspec
+source 'https://rubygems.org/'
 gemspec

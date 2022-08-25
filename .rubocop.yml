@@ -1,0 +1,13 @@
+AllCops:
+  TargetRubyVersion: 2.7
+  NewCops: enable
+  SuggestExtensions: false
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented
+Layout/DotPosition:
+  EnforcedStyle: trailing
+Style/Documentation:
+  Enabled: false
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*.rb'

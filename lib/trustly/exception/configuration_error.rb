@@ -2,7 +2,7 @@
 
 module Trustly
   module Exception
-    class AuthentificationError < Base
+    class ConfigurationError < Base
     end
   end
 end

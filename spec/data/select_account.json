@@ -1,0 +1,12 @@
+{
+  "result": {
+      "signature": "4FTSgwn7JqKns/vRjmdgyoUOhQQP0BM3SccezsLVThLqX5DXCsu5D0MTRheR\n1943yJ4ahm5122HLYx1a4Ug05u5uxvNv/9/IezICb3DCn/xQP0ucIp4ZENEb\nPxzvf1f1HQ8KW8rA4qqyackFxeV2NHAtYIXbA2fgB2FcQMmfWqPXsoUIW2fl\nkUhMfgIMWkUZKd/lALZIt0a9dG9cDePlFHjZ4HtLJLR2j57uHa+jUQ9FqHho\nLRS+egaCx++U8cLtnbgu6F/IP4moVRCIb7tdpkcxdINkQS+gCnrq/Y3OPNJ5\nZG1xnkPRclW8Q9bBBgl6VOo7F/bldzvcqHh+XHmTNg==",
+      "uuid": "258a2184-2842-b485-25ca-293525152425",
+      "method": "SelectAccount",
+      "data": {
+          "orderid": "2190971587",
+          "url": "https://trustly.com/_/bec96a48-d454-448e-a9ba-25fea8eeba3f"
+      }
+  },
+  "version": "1.1"
+}

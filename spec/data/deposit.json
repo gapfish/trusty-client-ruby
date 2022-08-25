@@ -1,0 +1,12 @@
+{
+  "result": {
+      "signature": "ywKipJ3zkwimgUtSTp4AEXxIaKhWciNBHeVI+g/1rggJ0mMqXWpsG9MfjqXB\ndeb6pWx7qAfykjkE2oQyBfivLV+TCP9tzqruKEReQvUuDQX1GqLhUcwOkSfk\nFDtMQf5ZqR3+GxacFwPOkKqJ3TU35O8YlaBAf4L0UWvotQQH2KoIoKmxgJtb\nHrarmFqFn6cWxiU6Q/EzNo230qaEdlYpEGACvXSU8v5DnxkUmGQOC/4yIUTX\ncBsxJCD3IWf6DHd7MrSDgeb1LI67bDkSkec2zzBoaxPuJJjCPBLCgIHEbxfr\ny96U5oeNUaVd03FN/V1FHF7PGj1GM9z3AXX5qwznng==",
+      "uuid": "258a2184-2842-b485-25ca-293525152425",
+      "method": "Deposit",
+      "data": {
+          "orderid": "2190971587",
+          "url": "https://trustly.com/_/2f6b14fa-446a-4364-92f8-84b738d589ff"
+      }
+  },
+  "version": "1.1"
+}

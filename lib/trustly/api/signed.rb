@@ -1,179 +1,209 @@
-class Trustly::Api::Signed < Trustly::Api
+# frozen_string_literal: true
 
-  attr_accessor :url_path,:api_username, :api_password, :merchant_privatekey, :is_https
+module Trustly
+  module Api
+    class Signed < Base # rubocop:disable Metrics/ClassLength
+      DEFAULT_API_PATH = '/api/1'
+      SIGNATURE_ERROR = 'Incoming message signature is not valid'
+      UUID_MISMATCH = 'Incoming response is not related to the request. UUID mismatch.'
 
+      attr_accessor :api_username,
+                    :api_password,
+                    :merchant_key
 
-  def initialize(_options)
-    options = {
-      :host        => 'test.trustly.com',
-      :port        => 443,
-      :is_https    => true,
-      # :private_pem => "#{Rails.root}/certs/trustly/test.merchant.private.pem",
-      # :public_pem  => "#{Rails.root}/certs/trustly/test.trustly.public.pem"
-      :private_pem => ENV['TRUSTLY_PRIVATE_KEY'],
-      :public_pem  => ENV['TRUSTLY_PUBLIC_KEY']
-    }.merge(_options)
+      def initialize(**config)
+        full_config = default_config.merge(config)
+        self.api_username = full_config.fetch(:username, nil)
+        self.api_password = full_config.fetch(:password, nil)
+        load_merchant_key(full_config[:private_pem])
 
+        super(**full_config.slice(*%i[host port is_https public_pem]))
+      end
 
-    # raise Trustly::Exception::SignatureError, "File '#{options[:private_pem]}' does not exist" unless File.file?(options[:private_pem])
-    # raise Trustly::Exception::SignatureError, "File '#{options[:public_pem]}' does not exist"  unless File.file?(options[:public_pem])
+      def void(**options)
+        required = %w[OrderId]
+        data = %w[OrderId]
+        call_rpc_for_data('Void', options, data: data, required: required)
+      end
 
-    super(options[:host],options[:port],options[:is_https],options[:public_pem])
+      def deposit(**options) # rubocop:disable Metrics/MethodLength
+        required = %w[
+          Locale Country Currency SuccessURL FailURL NotificationURL Amount
+          EndUserID MessageID Firstname Lastname ShopperStatement
+        ]
+        attributes = %w[
+          Locale Country Currency SuggestedMinAmount SuggestedMaxAmount Amount
+          IP SuccessURL FailURL TemplateURL URLTarget MobilePhone ShopperStatement
+          Firstname Lastname NationalIdentificationNumber Email AccountID
+          UnchangeableNationalIdentificationNumber ShippingAddressCountry
+          ShippingAddressPostalCode ShippingAddressLine1 ShippingAddressLine2
+          ShippingAddress RequestDirectDebitMandate ChargeAccountID QuickDeposit
+          URLScheme ExternalReference PSPMerchant PSPMerchantURL
+          MerchantCategoryCode RecipientInformation
+        ]
+        data = %w[NotificationURL EndUserID MessageID]
+        call_rpc_for_data(
+          'Deposit',
+          options, data: data, attributes: attributes, required: required
+        )
+      end
 
-    self.api_username = options.try(:[],:username)
-    self.api_password = options.try(:[],:password)
-    self.is_https     = options.try(:[],:is_https)
-    self.url_path     = '/api/1'
+      def refund(**options)
+        required = %w[OrderId Amount Currency]
+        data = %w[OrderId Amount Currency]
+        attributes = %w[ExternalReference]
+        call_rpc_for_data(
+          'Refund', options,
+          data: data, attributes: attributes, required: required
+        )
+      end
 
-    raise Trustly::Exception::AuthentificationError, "Username not valid" if self.api_username.nil?
-    raise Trustly::Exception::AuthentificationError, "Password not valid" if self.api_password.nil?
+      def select_account(**options) # rubocop:disable Metrics/MethodLength
+        required = %w[
+          Locale Country SuccessURL FailURL NotificationURL EndUserID MessageID
+          Firstname Lastname
+        ]
+        attributes = %w[
+          Locale Country Firstname Lastname SuccessURL FailURL Email IP
+          RequestDirectDebitMandate TemplateURL URLTarget MobilePhone
+          NationalIdentificationNumber UnchangeableNationalIdentificationNumber
+          ShopperStatement DateOfBirth URLScheme PSPMerchant PSPMerchantURL
+          MerchantCategoryCode
+        ]
+        data = %w[NotificationURL EndUserID MessageID]
+        call_rpc_for_data(
+          'SelectAccount', options,
+          data: data, attributes: attributes, required: required
+        )
+      end
 
-    self.load_merchant_privatekey
+      def account_payout(**options) # rubocop:disable Metrics/MethodLength
+        required = %w[
+          NotificationURL AccountID EndUserID MessageID Amount Currency
+          ShopperStatement
+        ]
+        data = %w[
+          NotificationURL AccountID EndUserID MessageID Amount Currency
+        ]
+        attributes = %w[
+          ShopperStatement PSPMerchant PSPMerchantURL
+          ExternalReference MerchantCategoryCode SenderInformation
+        ]
+        call_rpc_for_data(
+          'AccountPayout', options,
+          data: data, attributes: attributes, required: required
+        )
+      end
 
-  end
+      def register_account(**options) # rubocop:disable Metrics/MethodLength
+        required = %w[
+          EndUserID ClearingHouse BankNumber AccountNumber Firstname Lastname
+        ]
+        data = %w[
+          EndUserID ClearingHouse BankNumber AccountNumber Firstname Lastname
+        ]
+        attributes = %w[
+          DateOfBirth MobilePhone NationalIdentificationNumber AddressCountry
+          AddressPostalCode AddressCity AddressLine1 AddressLine2 Address Email
+        ]
+        call_rpc_for_data(
+          'RegisterAccount', options,
+          data: data, attributes: attributes, required: required
+        )
+      end
 
-  # def load_merchant_privatekey(filename)
-  #   self.merchant_privatekey = OpenSSL::PKey::RSA.new(File.read(filename))
-  # end
+      def get_withdrawals(**options)
+        data = %w[OrderId]
+        required = %w[OrderId]
+        call_rpc_for_data(
+          'GetWithdrawals', options,
+          data: data, required: required
+        )
+      end
 
-  def load_merchant_privatekey
-    self.merchant_privatekey = OpenSSL::PKey::RSA.new(ENV['TRUSTLY_PRIVATE_KEY'])
-  end
+      def notification_response(request, success: true)
+        response = Trustly::Data::JSONRPCNotificationResponse.new(
+          request: request, success: success
+        )
+        response.signature = sign_merchant_request(response)
+        response
+      end
 
-  def handle_response(request,httpcall)
-    response = Trustly::Data::JSONRPCResponse.new(httpcall)
-    raise   Trustly::Exception::SignatureError,'Incoming message signature is not valid' unless self.verify_trustly_signed_response(response)
-    raise   Trustly::Exception::DataError,     'Incoming response is not related to request. UUID mismatch.' if response.get_uuid() != request.get_uuid()
-    return  response
-  end
+      private
 
-  def insert_credentials(request)
-    request.set_data( 'Username' , self.api_username)
-    request.set_data( 'Password' , self.api_password)
-    request.set_param('Signature', self.sign_merchant_request(request))
-  end
+      def load_merchant_key(pkey)
+        self.merchant_key = OpenSSL::PKey::RSA.new(pkey) if pkey
+      rescue OpenSSL::PKey::RSAError
+        self.merchant_key = nil
+      end
 
-  def sign_merchant_request(data)
-    raise Trustly::Exception::SignatureError, 'No private key has been loaded' if self.merchant_privatekey.nil?
-    method      = data.get_method()
-    method      = '' if method.nil?
-    uuid        = data.get_uuid()
-    uuid        = '' if uuid.nil?
-    data        = data.get_data()
-    data        = {} if data.nil?
+      def configuration_errors
+        errors = super
+        errors.push 'Username not specified' if api_username.nil?
+        errors.push 'Password not specified' if api_password.nil?
+        errors.push 'Merchant private key not specified' if merchant_key.nil?
+        errors
+      end
 
-    serial_data = "#{method}#{uuid}#{self.serialize_data(data)}"
-    sha1hash    = OpenSSL::Digest::SHA1.new
-    signature   = self.merchant_privatekey.sign(sha1hash,serial_data)
-    return Base64.encode64(signature).chop #removes \n
-  end
+      def handle_response(request, response)
+        rpc_response = Trustly::Data::JSONRPCResponse.new(http_response: response)
+        check_response(rpc_response, request)
+        rpc_response
+      end
 
-  def url_path(request=nil)
-    return '/api/1'
-  end
+      def check_response(response, request)
+        raise Trustly::Exception::DataError, UUID_MISMATCH if response.uuid != request.uuid
+        raise Trustly::Exception::SignatureError, SIGNATURE_ERROR unless verify_signed_response(response)
+      end
 
-  def call_rpc(request)
-    request.set_uuid(SecureRandom.uuid) if request.get_uuid().nil?
-    return super(request)
-  end
+      def insert_credentials!(request)
+        request.update_data_at('Username', api_username)
+        request.update_data_at('Password', api_password)
+        request.signature = sign_merchant_request(request)
+      end
 
-  def void(orderid)
-    request = Trustly::Data::JSONRPCRequest.new('Void',{"OrderID"=>orderid},nil)
-    return self.call_rpc(request)
-  end
+      def sign_merchant_request(request)
+        method = request.method || ''
+        uuid = request.uuid || ''
+        data = request.data || {}
 
-  def deposit(_options)
-    options = {
-      "Locale"            => "es_ES",
-      "Country"           => "ES",
-      "Currency"          => "EUR",
-      "SuccessURL"        => "https://www.trustly.com/success",
-      "FailURL"           => "https://www.trustly.com/fail",
-      "NotificationURL"   => "https://test.trustly.com/demo/notifyd_test",
-      "Amount"            => 0
-    }.merge(_options)
+        serial_data = "#{method}#{uuid}#{serialize(data)}"
+        sha1hash = OpenSSL::Digest.new('SHA1')
+        signature = merchant_key.sign(sha1hash, serial_data)
+        Base64.encode64(signature).chop
+      end
 
-    ["Locale","Country","Currency","SuccessURL","FailURL","Amount","NotificationURL","EndUserID","MessageID"].each do |req_attr|
-      raise Trustly::Exception::DataError, "Option not valid '#{req_attr}'" if options.try(:[],req_attr).nil?
+      def url_path(_request = nil)
+        DEFAULT_API_PATH
+      end
+
+      def call_rpc(request)
+        request.uuid = SecureRandom.uuid if request.uuid.nil?
+        super(request)
+      end
+
+      def call_rpc_for_data(method, options, data:, required:, attributes: [])
+        missing_options = required.find_all { |req| options[req].nil? }
+        unless missing_options.empty?
+          msg = "Required data is missing: #{missing_options.join('; ')}"
+          raise Trustly::Exception::DataError, msg
+        end
+        request = Trustly::Data::JSONRPCRequest.new(
+          method: method, data: options.slice(*data),
+          attributes: attributes.empty? ? nil : options.slice(*attributes)
+        )
+        call_rpc(request)
+      end
+
+      def default_config
+        {
+          host: 'test.trustly.com',
+          port: 443,
+          is_https: true,
+          private_pem: ENV.fetch('MERCHANT_PRIVATE_KEY', nil),
+          public_pem: ENV.fetch('TRUSTLY_PUBLIC_KEY', nil)
+        }
+      end
     end
-
-    raise Trustly::Exception::DataError, "Amount is 0" if options["Amount"].nil? || options["Amount"].to_f <= 0.0
-
-    attributes = options.slice(
-      "Locale","Country","Currency",
-      "SuggestedMinAmount","SuggestedMaxAmount","Amount",
-      "Currency","Country","IP",
-      "SuccessURL","FailURL","TemplateURL","URLTarget",
-      "MobilePhone","Firstname","Lastname","NationalIdentificationNumber",
-      "ShopperStatement"
-    )
-
-    data       = options.slice("NotificationURL","EndUserID","MessageID")
-
-    # check required fields
-    request = Trustly::Data::JSONRPCRequest.new('Deposit',data,attributes)
-    return self.call_rpc(request)
-    #options["HoldNotifications"] = "1" unless
   end
-
-  def refund(_options)
-    options = {
-      "Currency" => "EUR"
-    }.merge(_options)
-
-    # check for required options
-    ["OrderID","Amount","Currency"].each{|req_attr| raise Trustly::Exception::DataError, "Option not valid '#{req_attr}'" if options.try(:[],req_attr).nil? }
-
-    request = Trustly::Data::JSONRPCRequest.new('Refund',options,nil)
-    return self.call_rpc(request)
-  end
-
-  def select_account(_options)
-    options = {
-        "Locale"            => "se_SE",
-        "Country"           => "SE",
-        "SuccessURL"        => "https://www.trustly.com/success",
-        "FailURL"           => "https://www.trustly.com/fail",
-        "NotificationURL"   => "https://test.trustly.com/demo/notifyd_test",
-    }.merge(_options)
-
-    ["Locale","Country","SuccessURL","FailURL","NotificationURL","EndUserID","MessageID"].each do |req_attr|
-      raise Trustly::Exception::DataError, "Option not valid '#{req_attr}'" if options.try(:[],req_attr).nil?
-    end
-
-    attributes = options.slice(
-        "Locale","Country","IP",
-        "SuccessURL","FailURL","TemplateURL","URLTarget",
-        "MobilePhone","Firstname","Lastname","NationalIdentificationNumber"
-    )
-
-    data       = options.slice("NotificationURL","EndUserID","MessageID")
-
-    # check required fields
-    request = Trustly::Data::JSONRPCRequest.new('SelectAccount',data,attributes)
-    return self.call_rpc(request)
-  end
-
-  def account_payout(_options)
-    options = {
-        "Currency" => "SEK"
-    }.merge(_options)
-
-    # check for required options
-    ["NotificationURL","AccountID","EndUserID","MessageID","Amount","Currency"].each{|req_attr| raise Trustly::Exception::DataError, "Option not valid '#{req_attr}'" if options.try(:[],req_attr).nil? }
-
-    request = Trustly::Data::JSONRPCRequest.new('AccountPayout',options,nil)
-    return self.call_rpc(request)
-  end
-
-  def notification_response(notification,success=true)
-    response = Trustly::JSONRPCNotificationResponse.new(notification,success)
-    response.set_signature(self.sign_merchant_request(response))
-    return response
-  end
-
-  def withdraw(_options)
-
-  end
-
 end
