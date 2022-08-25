@@ -90,10 +90,10 @@ RSpec.describe Trustly::Api::Signed do
       context 'when private key is invalid' do
         let(:params) { basic_params }
         before do
-          expect(OpenSSL::PKey::RSA).to receive(:new)
-            .with(basic_params[:public_pem]).and_call_original
-          expect(OpenSSL::PKey::RSA).to receive(:new)
-            .with(basic_params[:private_pem]).and_raise(OpenSSL::PKey::RSAError)
+          expect(OpenSSL::PKey::RSA).to receive(:new).
+            with(basic_params[:public_pem]).and_call_original
+          expect(OpenSSL::PKey::RSA).to receive(:new).
+            with(basic_params[:private_pem]).and_raise(OpenSSL::PKey::RSAError)
         end
         let(:message) do
           'Merchant private key not specified'
@@ -223,9 +223,9 @@ RSpec.describe Trustly::Api::Signed do
         end
 
         before do
-          expect(Trustly::Data::JSONRPCRequest).to receive(:new)
-            .with(method: method, data: data, attributes: attributes)
-            .and_return(request)
+          expect(Trustly::Data::JSONRPCRequest).to receive(:new).
+            with(method: method, data: data, attributes: attributes).
+            and_return(request)
           expect(SecureRandom).to receive(:uuid).and_return(uuid)
           expect(request).to receive(:uuid=).with(uuid)
           expect(request).to receive(:signature=).with(signature)
@@ -239,24 +239,24 @@ RSpec.describe Trustly::Api::Signed do
             instance_of(OpenSSL::Digest), serial_data
           ).and_return('signature')
           expect(request).to receive(:to_json).and_return(body)
-          expect(Faraday).to receive(:new).with('https://test.trustly.com')
-                                          .and_return(connection)
+          expect(Faraday).to receive(:new).with('https://test.trustly.com').
+            and_return(connection)
         end
         context 'with a successful response' do
           before do
             expect(connection).to receive(:post).with(
               '/api/1', body, { 'Content-Type' => 'application/json' }
             ).and_return(http_response)
-            expect(Trustly::Data::JSONRPCResponse).to receive(:new)
-              .with(http_response: http_response).and_return(response)
-            expect(response).to receive(:uuid).at_least(:once)
-                                              .and_return(response_uuid)
-            expect(response).to receive(:data).at_least(:once)
-                                              .and_return(response_body)
-            expect(response).to receive(:method).at_least(:once)
-                                                .and_return(method)
-            expect(response).to receive(:signature)
-              .and_return(response_signature)
+            expect(Trustly::Data::JSONRPCResponse).to receive(:new).
+              with(http_response: http_response).and_return(response)
+            expect(response).to receive(:uuid).at_least(:once).
+              and_return(response_uuid)
+            expect(response).to receive(:data).at_least(:once).
+              and_return(response_body)
+            expect(response).to receive(:method).at_least(:once).
+              and_return(method)
+            expect(response).to receive(:signature).
+              and_return(response_signature)
             expect(subject.trustly_key).to receive_message_chain(
               :public_key, :verify
             ).with(
@@ -346,10 +346,10 @@ RSpec.describe Trustly::Api::Signed do
               expect(connection).to receive(:post).with(
                 '/api/1', body, { 'Content-Type' => 'application/json' }
               ).and_return(http_response)
-              expect(Trustly::Data::JSONRPCResponse).to receive(:new)
-                .with(http_response: http_response).and_return(response)
-              expect(response).to receive(:uuid).at_least(:once)
-                                                .and_return(response_uuid)
+              expect(Trustly::Data::JSONRPCResponse).to receive(:new).
+                with(http_response: http_response).and_return(response)
+              expect(response).to receive(:uuid).at_least(:once).
+                and_return(response_uuid)
             end
 
             context 'with an incorrect uuid' do
@@ -369,8 +369,8 @@ RSpec.describe Trustly::Api::Signed do
               before do
                 expect(response).to receive(:data).and_return(response_body)
                 expect(response).to receive(:method).and_return(method)
-                expect(response).to receive(:signature)
-                  .and_return(response_signature)
+                expect(response).to receive(:signature).
+                  and_return(response_signature)
                 expect(subject.trustly_key).to receive_message_chain(
                   :public_key, :verify
                 ).with(
@@ -601,20 +601,20 @@ RSpec.describe Trustly::Api::Signed do
       let(:response) { instance_double(Trustly::Data::JSONRPCNotificationResponse) }
 
       before do
-        expect(Trustly::Data::JSONRPCNotificationResponse).to receive(:new)
-          .with(request: request, success: success).and_return(response)
+        expect(Trustly::Data::JSONRPCNotificationResponse).to receive(:new).
+          with(request: request, success: success).and_return(response)
         expect(response).to receive(:uuid).and_return(uuid)
         expect(response).to receive(:method).and_return(method)
         expect(response).to receive(:data).and_return(data)
-        expect(subject.merchant_key).to receive(:sign)
-          .with(instance_of(OpenSSL::Digest), serial_data)
-          .and_return('signature')
+        expect(subject.merchant_key).to receive(:sign).
+          with(instance_of(OpenSSL::Digest), serial_data).
+          and_return('signature')
         expect(response).to receive(:signature=).with(signature)
       end
 
       it 'returns a response' do
-        result = subject
-                 .notification_response(request, success: success)
+        result = subject.
+          notification_response(request, success: success)
         expect(result).to eq(response)
       end
     end

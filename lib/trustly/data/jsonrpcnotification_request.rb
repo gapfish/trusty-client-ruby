@@ -38,7 +38,7 @@ module Trustly
       private
 
       def notification_body(body)
-        return stringify_hash(body) if body.is_a?(Hash)
+        return Utils::DataTransformer.deep_stringify_hash(body) if body.is_a?(Hash)
 
         JSON.parse(body)
       rescue JSON::ParserError => e

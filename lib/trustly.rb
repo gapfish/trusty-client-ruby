@@ -17,6 +17,9 @@ require 'trustly/exception/configuration_error'
 require 'trustly/exception/jsonrpc_version_error'
 require 'trustly/exception/signature_error'
 
+require 'trustly/utils/data_transformer'
+require 'trustly/utils/data_cleaner'
+
 require 'trustly/data/base'
 require 'trustly/data/request'
 require 'trustly/data/response'

@@ -81,14 +81,14 @@ module Trustly
         else
           raise TypeError, 'Data must be a Hash if attributes are provided' if !data.is_a?(Hash) && with_attributes
 
-          payload['params']['Data'] = vacuum(data)
+          payload['params']['Data'] = Utils::DataCleaner.vacuum(data)
         end
       end
 
       def initialize_attributes(attributes)
         return if attributes.nil?
 
-        payload['params']['Data']['Attributes'] ||= vacuum(attributes)
+        payload['params']['Data']['Attributes'] ||= Utils::DataCleaner.vacuum(attributes)
       end
     end
   end
